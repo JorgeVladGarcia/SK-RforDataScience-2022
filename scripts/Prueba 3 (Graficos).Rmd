@@ -1,0 +1,170 @@
+---
+title: "Prueba 3"
+author: "Jorge Vladimir García"
+date: "July 31, 2020"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+# INSTALAR LIBRERIES
+# install.packages("tidyverse")
+
+# ABRIR LIBRARIES
+library(tidyverse)
+library(reshape2)
+# library(hrbrthemes)
+```
+
+## Crear base de datos
+
+```{r, include=FALSE}
+# DATOS 
+Año     <- c(1976, 1992, 2001, 2012)
+Total   <- c(4613419, 6420792, 8274325, 10059856)
+Urbana  <- c(1906324, 3694846, 5165230, 6788962)
+Rural   <- c(2707095, 2725946, 3109095, 3270894)
+
+Censos_Bolivia_1<- data.frame(Año, Total, Urbana, Rural)
+```
+
+## Censos Bolivia
+
+La siguiente base contiene información censal de los años 1976, 1992, 2001 y 2012 desagregados según residencia (urbano y rural).
+
+```{r}
+Censos_Bolivia_1
+```
+
+Los siguientes son datos de información censal de los mismos periodos en formato vertical. 
+```{r}
+( Censo_Bolivia_2<- melt(Censos_Bolivia_1, id='Año') )
+```
+
+```{r, include=FALSE}
+names(Censo_Bolivia_2)<- c('Año', 'func', 'value')
+```
+
+```{r}
+Censo_Bolivia_2
+```
+
+## Graficos
+
+```{r, include=FALSE}
+# GRAFICO
+grafico1<-  ggplot(Censo_Bolivia_2, aes(x=Año, y=value, group=func)) +
+            geom_line(aes(linetype=func), alpha=0.9)+
+            geom_point()+
+            labs(x="Año", y="Población")+
+            scale_y_continuous(labels = scales::comma)+
+            scale_x_continuous(breaks = c(1976,1992,2001,2012))
+
+```
+
+```{r}
+grafico1
+```
+
+
+```{r, include=FALSE}
+# GRAFICO
+grafico2<-  ggplot(Censo_Bolivia_2, aes(x=Año, y=value, group=func)) +
+            geom_line(aes(linetype=func), alpha=0.9) +
+            geom_point() +
+            ggtitle("BOLIVIA. POBLACIÓN TOTAL POR ÁREA DE RESIDENCIA") +
+            labs(x="Año", y="Población") +
+            scale_y_continuous(labels = scales::comma)
+            scale_x_continuous(breaks = c(1976,1992,2001,2012))
+
+```
+
+```{r}
+grafico2
+```
+
+```{r, include=FALSE}
+# GRAFICO
+grafico3<-  ggplot(Censo_Bolivia_2, aes(x=Año, y=value, group=func))+
+            geom_line(aes(linetype=func), size = 0.7) +
+            geom_point(shape=21, color="black", fill="#69b3a2", size=2) +
+            scale_x_continuous(breaks = c(1976,1992,2001,2012)) + 
+            scale_y_continuous(labels = scales::unit_format(unit = "M", scale = 1e-6)) +
+            labs(title = "Bolivia.Población total por área de residencia",
+                 subtitle = "Área urbana vs rural",
+                 y = "Población (millones)",
+                 x = "Año",
+                 caption = "Fuente: INE")
+```
+
+
+```{r}
+grafico3
+```
+
+
+### Calcular que año la población de urbana fue igual a la poblacion rural
+```{r, include=FALSE}
+## Instalar librerias
+
+# install.packages("htmlwidgets") # libreria lo requiere
+# install.packages("retistruct") # Para operaciones geometricas
+
+## Librerias 
+library(htmlwidgets)  # libreria lo requiere
+library(retistruct)   # Para operaciones matematicas / geometria
+```
+
+```{r}
+Censo_Bolivia_2
+```
+
+```{r}
+Censos_Bolivia_1
+```
+
+### Año que la población rural y urbana fueron iguales
+
+```{r}
+line.line.intersection(
+  c(1976, 1906324), c(1992, 3694846), # Urbana
+  c(1976, 2707095), c(1992, 2725946)  # Rural 
+)
+```
+El año 1983, la población urbana y rural en Bolivia eran iguales en aproximadamente 2715625 millones de habitantes.
+
+### ¿Qué año la poblacion total en Bolivia se duplicó en comparación a 1976?
+```{r}
+4613419 * 2 # Hallar el valor de duplicacion 
+```
+La población de Bolivia se duplicó en 9226838 habitantes, con respecto a 4613419 habitantes que existiían en 1976.
+
+```{r}
+line.line.intersection(
+  c(2001, 8274325), c(2012, 10059856), # Poblacion total
+  c(1976, 9226838), c(2012, 9226838)   # Duplicacion 
+)
+```
+El año 2006, la población de Bo livia se duplicó en comparación a 1976 llegando a aproximadamente 9226838 de habitantes. 
+
+### Reporte final 
+```{r, include=FALSE}
+# GRAFICO
+grafico4<-  ggplot(Censo_Bolivia_2, aes(x=Año, y=value, group=func))+
+            geom_line(aes(linetype=func), size = 0.7) +
+            geom_point(shape=21, color="black", fill="#69b3a2", size=2) +
+            geom_label( x=1977, y=5500000, label="La población en \n1976 es de 4.6 M", size=2) +
+           geom_label( x=2002, y=9500000, label="La población de Bolivia \nse duplicó a 9.2 M en 2005", size=2) +
+            geom_label( x=1983, y=3500000, label="En 1983 población \nurbana supera a rural", size=2) +
+            scale_x_continuous(breaks = c(1976,1992,2001,2012)) + 
+            scale_y_continuous(labels = scales::unit_format(unit = "M", scale = 1e-6)) +
+            labs(title = "Bolivia.Población total por área de residencia",
+                 subtitle = "Área urbana vs rural",
+                 y = "",
+                 x = "",
+                 group = "",
+                 caption = "Fuente: INE") 
+```
+
+```{r}
+grafico4
+```
