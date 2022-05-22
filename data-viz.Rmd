@@ -1,0 +1,169 @@
+---
+title: "R for data science"
+author: "JORGE GARCIA"
+date: '2022-05-22'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+# load packages 
+library(tidyverse)
+library(janitor)
+```
+
+## Import data
+```{r}
+censos_bolivia <- read_csv("data-raw/censos_bolivia.csv")
+censos_bolivia
+```
+## Tidy data - Variable Names
+rename() changes the names of individual variables using new_name = old_name syntax. 
+
+Best practices: 
+- Follow conventions (lower case, camel format, no spaces, etc.).
+- Avoid blank spaces.
+- In english. (?)
+- Short.
+
+```{r}
+(censos_bolivia_tidy <- censos_bolivia %>%
+  rename(year = Año,
+         pob_total = `Población Total`,
+         pob_urban = `Población urbana`,
+         pob_rural = `Población rural`))
+```
+
+## Tidy data - Wide and Long data
+pivot_longer() "lengthens" data, increasing the number of rows and decreasing the number of columns. The inverse transformation is pivot_wider()
+
+Best practics:
+- Tidy data , often is going from wide data to long data (to reduce number of variables) summaries with less code. 
+- Each column represents a variable, and each row represents an observation,
+```{r}
+(censos_bolivia_tidy <- censos_bolivia %>%
+  rename(year = Año,
+         pob_total = `Población Total`,
+         pob_urban = `Población urbana`,
+         pob_rural = `Población rural`) %>% 
+  pivot_longer(cols = -year,
+               names_to = "pob_type",
+               values_to = "value"))
+```
+## Tidy data - recode variables 
+mutate() adds new variables and preserves existing ones;
+```{r}
+censos_bolivia_tidy <- censos_bolivia %>%
+  rename(year = Año,
+         pob_total = `Población Total`,
+         pob_urban = `Población urbana`,
+         pob_rural = `Población rural`) %>% 
+  pivot_longer(cols = -year,
+               names_to = "pob_type",
+               values_to = "value") %>%
+  mutate(pob_type = case_when(
+    pob_type == "pob_total" ~ "total",
+    pob_type == "pob_urban" ~ "urban",
+    pob_type == "pob_rural" ~ "rural"
+  ))
+
+# save file as RDS ? consider
+censos_bolivia_tidy
+```
+
+```{r}
+ggplot(Censo_Bolivia_2, aes(x=Año, y=value, group=func)) +
+            geom_line(aes(linetype=func), alpha=0.9)+
+            geom_point()+
+            labs(x="Año", y="Población")+
+            scale_y_continuous(labels = scales::comma)+
+            scale_x_continuous(breaks = c(1976,1992,2001,2012))
+```
+
+## Plotting
+ggplot() initializes a ggplot object. It can be used to declare the input data frame for a graphic and to specify the set of plot aesthetics intended to be common throughout all subsequent layers unless specifically overridden.
+```{r}
+# Adding colors within aes variable
+censos_bolivia_tidy %>% 
+  ggplot(aes(
+    x = year, 
+    y = value,
+    group = pob_type,
+    color = pob_type
+    )) +
+  geom_line()
+```
+
+```{r}
+censos_bolivia_tidy %>% 
+  ggplot(aes(
+    x = year, 
+    y = value,
+    group = pob_type,
+    )) +
+  geom_line(aes(color = pob_type))
+```
+## Customizing color
+scale_manual
+These functions allow you to specify your own set of mappings from levels in the data to aesthetic values.
+
+
+```{r}
+censos_bolivia_tidy %>% 
+  ggplot(aes(
+    x = year, 
+    y = value,
+    group = pob_type,
+    )) +
+  geom_line(aes(color = pob_type)) +
+  scale_color_manual(values = c("Green", "Yellow", "Blue"))
+
+
+censos_bolivia_tidy %>% 
+  ggplot(aes(
+    x = year, 
+    y = value,
+    group = pob_type,
+    color = pob_type
+    )) +
+  geom_line() +
+  scale_color_manual(values = c("#cc0000", "#3cb371", "#71a6d2"))
+```
+## Remove default gray brackground and customize 
+```{r}
+censos_bolivia_tidy %>% 
+  ggplot(aes(
+    x = year, 
+    y = value,
+    group = pob_type,
+    color = pob_type
+    )) +
+  geom_line(size = 0.4) +
+  scale_color_manual(values = c("#cc0000", "#3cb371", "#71a6d2")) + 
+  theme_minimal() +
+  geom_point()
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
