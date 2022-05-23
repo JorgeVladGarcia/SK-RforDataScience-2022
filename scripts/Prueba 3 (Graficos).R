@@ -40,6 +40,7 @@ ggplot(Censo_Bolivia_2, aes(x=Año, y=value, group=func))+
        caption = "Fuente: INE") +
   transition_reveal(Año) # <- Linea de codigo para crear animaciones
 
+
 # Hallar interseccio
 
 2005-1976
