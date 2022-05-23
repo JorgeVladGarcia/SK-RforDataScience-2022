@@ -198,44 +198,158 @@ censos_bolivia_tidy %>%
 ```
 
 ## Finding and adding insights 
+- Year where Rural and Urban population intersect.
 
 ```{r}
-interscet_urban <- censos_bolivia_tidy %>% 
-  filter(year <=  "1992") %>%
-  filter(pob_type == "urban") %>%
-  select(year, value)
+lineurban <- Line$new(A = c(1976, 1906324), B = c(1992, 3694846))
+linerural <- Line$new(A = c(1976, 2707095), B = c(1992, 2725946))
 
-interscet_rural <- censos_bolivia_tidy %>% 
-  filter(year <=  "1992") %>%
-  filter(pob_type == "rural") %>%
-  select(year, value)
-
-
-line1 <- Line$new(A = c(1976, 1906324), B = c(1992, 3694846))
-line2 <- Line$new(A = c(1976, 2707095), B = c(1992, 2725946))
-intersectionLineLine(line1, line2)
-
+intersectionLineLine(lineurban, linerural)
 ```
 
 
 ```{r}
-  # c(1976, 1906324), c(1992, 3694846), # Urbana
-  # c(1976, 2707095), c(1992, 2725946)  # Rural 
+censos_bolivia_tidy %>% 
+  ggplot(aes(
+    x = year, 
+    y = value,
+    group = pob_type,
+    color = pob_type
+    )) +
+  geom_line(size = 0.4) +
+  scale_color_manual(values = c("#cc0000", "#3cb371", "#71a6d2")) + 
+  theme_minimal() +
+  geom_point() + 
+  scale_x_continuous(breaks = c(1976,1992,2001,2012)) +
+  scale_y_continuous(labels = scales::unit_format(unit = "M"
+                                                  , scale = 1e-6)) + 
+  labs(title = "Population by area of residence in Bolivia",
+       subtitle = "Urban and rural population",
+       y = "Population (millions)",
+       x = "Year",
+       caption = "Sources: National Insitute of Statistics") +
+  # urban vs rural population comparison
+  annotate("text",
+          x = 1983.24,
+          y = 3600000,
+          #hjust = 0,
+          size = 3,
+          label = "Urban population starts\nto grow faster than rural\nin 1983",
+          color = "#778899") +
+  # total population since 1976
+  annotate("text",
+           x = 1976,
+           y = 5700000, 
+           hjust = 0.2,
+           size = 3,
+           label = "Total inhabitants\nis 4.6 M in 1976",
+           color = "#778899")
+```
+- Year where population doubles since 1976. 
 
-aproxfun()
+```{r}
+ 4613419 * 2 # Hallar el valor de duplicacion 
 
-x <- 1:10
-y <- rnorm(10)
-(par(mfrow = c(2,1)))
+linetotal <- Line$new(A = c(1976, 4613419), B = c(2012, 10059856)) # Poblacion total
+linedouble <- Line$new(A=c(1976, 9226838), B = c(2012, 9226838))  # Duplicacion 
 
-x
-y
+intersectionLineLine(linetotal, linedouble)
+```
 
-plot(x, y, main = "approx(.) and approxfun(.)")
+```{r}
+censos_bolivia_tidy %>% 
+  ggplot(aes(
+    x = year, 
+    y = value,
+    group = pob_type,
+    color = pob_type
+    )) +
+  geom_line(size = 0.4) +
+  scale_color_manual(values = c("#cc0000", "#3cb371", "#71a6d2")) + 
+  theme_minimal() +
+  geom_point() + 
+  scale_x_continuous(breaks = c(1976,1992,2001,2012)) +
+  scale_y_continuous(labels = scales::unit_format(unit = "M"
+                                                  , scale = 1e-6)) + 
+  labs(title = "Population by area of residence in Bolivia",
+       subtitle = "Urban and rural population",
+       y = "Population (millions)",
+       x = "Year",
+       caption = "Sources: National Insitute of Statistics") +
+  # urban vs rural population comparison
+  annotate("text",
+          x = 1983.24,
+          y = 3600000,
+          #hjust = 0,
+          size = 3,
+          label = "Urban population starts\nto grow faster than rural\nin 1983",
+          color = "#778899") +
+  # total population since 1976
+  annotate("text",
+           x = 1976,
+           y = 5700000, 
+           hjust = 0.2,
+           size = 3,
+           label = "Total population\nis 4.6 M in 1976",
+           color = "#778899") +
+  # total population doubles in 2006
+  annotate("text",
+           x = 2006,
+           y = 9900000,
+           size = 3,
+           color = "#778899",
+           label = "Population doubles\nto 9.2 M in 2006.") 
+```
 
-points(approx(x, y), col = 2)
-points(approx(x, y, method = "constant"), col = 4, pch = "*")
 
+
+
+```{r}
+censos_bolivia_tidy_gif <- censos_bolivia_tidy %>% 
+  ggplot(aes(
+    x = year, 
+    y = value,
+    group = pob_type,
+    color = pob_type
+  )) +
+  geom_line(size = 0.4) +
+  scale_color_manual(values = c("#cc0000", "#3cb371", "#71a6d2")) + 
+  theme_minimal() +
+  geom_point() + 
+  scale_x_continuous(breaks = c(1976,1992,2001,2012)) +
+  scale_y_continuous(labels = scales::unit_format(unit = "M"
+                                                  , scale = 1e-6)) + 
+  labs(title = "Population by area of residence in Bolivia",
+       subtitle = "Urban and rural population",
+       y = "Population (millions)",
+       x = "Year",
+       caption = "Sources: National Insitute of Statistics") +
+  # urban vs rural population comparison
+  annotate("text",
+           x = 1983.24,
+           y = 3600000,
+           #hjust = 0,
+           size = 3,
+           label = "Urban population starts\nto grow faster than rural\nin 1983",
+           color = "#778899") +
+  # total population since 1976
+  annotate("text",
+           x = 1976,
+           y = 5700000, 
+           hjust = 0.2,
+           size = 3,
+           label = "Total population\nis 4.6 M in 1976",
+           color = "#778899") +
+  # total population doubles in 2006
+  annotate("text",
+           x = 2006,
+           y = 9900000,
+           size = 3,
+           color = "#778899",
+           label = "Population doubles\nto 9.2 M in 2006.") +
+  transition_reveal(year) # <- Linea de codigo para crear animaciones
+
+censos_bolivia_tidy_gif
 ```
 
 ## R Markdown
