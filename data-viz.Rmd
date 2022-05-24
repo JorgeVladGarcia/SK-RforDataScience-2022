@@ -6,31 +6,52 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-options(scipen=999)
+knitr::opts_chunk$set(echo = TRUE,
+                      warning = FALSE,
+                      message = FALSE) # turn off warnings and messages
+
+options(scipen=999) # turn off scientific notation
 ```
 
 
 ```{r}
-# load packages 
+# load data viz/analysis packages 
 library(tidyverse)
 library(janitor)
 
-library(retistruct) # to do mathematical oprations
+# load math operations packages
+library(PlaneGeometry)
+
+# load animation paclages
+library(gganimate)  # to create animations
+library(gifski)     # to render animations
+library(png)        # to save animations
+
 ```
 
 ## Import data
+readr supports the following file formats with these read_*() functions:
+
+- comma-separated values (CSV) files
+- tab-separated values (TSV) files
+- delimited files (CSV and TSV are important special cases)
+- fixed-width files
+- whitespace-separated files
+- web log files
+
 ```{r}
 censos_bolivia <- read_csv("data-raw/censos_bolivia.csv")
-censos_bolivia
+
+print(censos_bolivia)
 ```
 ## Tidy data - Variable Names
-rename() changes the names of individual variables using new_name = old_name syntax. 
+`rename()` function changes the names of individual variables using `new_name = old_name` syntax. 
 
 Best practices: 
+
 - Follow conventions (lower case, camel format, no spaces, etc.).
 - Avoid blank spaces.
-- In english. (?)
+- In English. (?)
 - Short.
 
 ```{r}
@@ -41,24 +62,29 @@ Best practices:
          pob_rural = `Población rural`))
 ```
 
-## Tidy data - Wide and Long data
-pivot_longer() "lengthens" data, increasing the number of rows and decreasing the number of columns. The inverse transformation is pivot_wider()
+## Tidy data - Wide and Long Data
+`pivot_longer()` "lengthens" data, increasing the number of rows and decreases the number of columns. The inverse transformation is `pivot_wider()`
 
-Best practics:
-- Tidy data , often is going from wide data to long data (to reduce number of variables) summaries with less code. 
-- Each column represents a variable, and each row represents an observation,
+Best practices:
+
+- Reduce number of variables (to perform summaries with less code).
+- Cleaning up data is often going from wide to long data. 
+- Each column should represent a variable, and each row should represent an observation an observation. 
+
 ```{r}
-(censos_bolivia_tidy <- censos_bolivia %>%
+censos_bolivia_tidy <- censos_bolivia %>%
   rename(year = Año,
          pob_total = `Población Total`,
          pob_urban = `Población urbana`,
          pob_rural = `Población rural`) %>% 
   pivot_longer(cols = -year,
-               names_to = "pob_type",
-               values_to = "value"))
+               names_to = "pob_type", # population type
+               values_to = "value")
+
+print(censos_bolivia_tidy)
 ```
-## Tidy data - recode variables 
-mutate() adds new variables and preserves existing ones;
+## Tidy data - Recode Variables 
+`mutate()` adds new variables and preserves existing ones. 
 ```{r}
 censos_bolivia_tidy <- censos_bolivia %>%
   rename(year = Año,
@@ -72,48 +98,43 @@ censos_bolivia_tidy <- censos_bolivia %>%
     pob_type == "pob_total" ~ "total",
     pob_type == "pob_urban" ~ "urban",
     pob_type == "pob_rural" ~ "rural"
-  ))
+ ))
 
-# save file as RDS ? consider
-censos_bolivia_tidy
+print(censos_bolivia_tidy)
 ```
 
-```{r}
-ggplot(Censo_Bolivia_2, aes(x=Año, y=value, group=func)) +
-            geom_line(aes(linetype=func), alpha=0.9)+
-            geom_point()+
-            labs(x="Año", y="Población")+
-            scale_y_continuous(labels = scales::comma)+
-            scale_x_continuous(breaks = c(1976,1992,2001,2012))
-```
+## Plotting Data
+`ggplot()` initializes a ggplot object. It can be used to declare the input data frame for a graphic and to specify the set of plot aesthetics intended to be common throughout all subsequent layers unless specifically overridden
 
-## Plotting
-ggplot() initializes a ggplot object. It can be used to declare the input data frame for a graphic and to specify the set of plot aesthetics intended to be common throughout all subsequent layers unless specifically overridden.
 ```{r}
-# Adding colors within aes variable
 censos_bolivia_tidy %>% 
   ggplot(aes(
     x = year, 
     y = value,
     group = pob_type,
+    )) +
+  geom_line() # geom_point, geom_area
+```
+
+### Customizing Plots - Color
+
+```{r}
+censos_bolivia_tidy %>% 
+  ggplot(aes(
+    x = year, 
+    y = value,
+    group = pob_type,
+    )) +
+  geom_line(aes(
     color = pob_type
-    )) +
-  geom_line()
+    ))
 ```
 
-```{r}
-censos_bolivia_tidy %>% 
-  ggplot(aes(
-    x = year, 
-    y = value,
-    group = pob_type,
-    )) +
-  geom_line(aes(color = pob_type))
-```
-## Customizing color
-scale_manual
-These functions allow you to specify your own set of mappings from levels in the data to aesthetic values.
+### Customizing Plots - Color HEX Values
 
+`scale_manual` These functions allow you to specify your own set of mappings from levels in the data to aesthetic values.
+
+- Also accepts HTML HEX value as input
 
 ```{r}
 censos_bolivia_tidy %>% 
@@ -136,8 +157,10 @@ censos_bolivia_tidy %>%
   geom_line() +
   scale_color_manual(values = c("#cc0000", "#3cb371", "#71a6d2"))
 ```
-## Remove default gray brackground and customize 
-These are complete themes which control all non-data display. Use theme() if you just need to tweak the display of an existing theme.
+
+### Customizing Plots - Remove Default Gray Brackground and Customize 
+
+`theme_()` can be used if you just need to tweak the display of an existing theme. Themes are a powerful way to customize the non-data components of your plots.
 
 ```{r}
 censos_bolivia_tidy %>% 
@@ -153,7 +176,8 @@ censos_bolivia_tidy %>%
   geom_point()
 ```
 
-## Add titles and more customizations
+### Customizing plots - Axis Titles
+
 ```{r}
 censos_bolivia_tidy %>% 
   ggplot(aes(
@@ -166,15 +190,17 @@ censos_bolivia_tidy %>%
   scale_color_manual(values = c("#cc0000", "#3cb371", "#71a6d2")) + 
   theme_minimal() +
   geom_point() + 
-  scale_x_continuous(name = "year") +
+  scale_x_continuous(name = "Year") +
   scale_y_continuous(labels = scales::unit_format(unit = "M", scale = 1e-6))
 ```
 
+### Customizing plots - Adding Labels
+Best practices:
 
-            scale_x_continuous(breaks = c(1976,1992,2001,2012)) + 
-            scale_y_continuous(labels = scales::unit_format(unit = "M", scale = 1e-6)) +
+- Good labels are critical for making your plots accessible to a wider audience. 
+- Ensure the axis and legend labels display the full variable name.
+- `labs()` function.
 
-## Adding labels
 ```{r}
 censos_bolivia_tidy %>% 
   ggplot(aes(
@@ -190,17 +216,28 @@ censos_bolivia_tidy %>%
   scale_x_continuous(breaks = c(1976,1992,2001,2012)) +
   scale_y_continuous(labels = scales::unit_format(unit = "M"
                                                   , scale = 1e-6)) + 
-  labs(title = "Population by area of residence in Bolivia",
+  labs(title = "Population by area of residence in Bolivia from 1976 to 2012",
        subtitle = "Urban and rural population",
        y = "Population (millions)",
        x = "Year",
-       caption = "Sources: National Insitute of Statistics")
+       caption = "Sources: INE")
 ```
 
-## Finding and adding insights 
+## Finding and Adding Insights 
+
+- `annotate()`
+- Get insights from data available 
 - Year where Rural and Urban population intersect.
+- create annotation layers with insights, passed in as vectors. 
+- Avoid adding columns or rows into the data frame. 
+- Accepts control characters `\r\n` `\r` and `\n`
+
+### Intersection of Rural and Urban Populations 
+
+Finding year when urban population grows faster than rural
 
 ```{r}
+# finding when urban population grows faster than rural
 lineurban <- Line$new(A = c(1976, 1906324), B = c(1992, 3694846))
 linerural <- Line$new(A = c(1976, 2707095), B = c(1992, 2725946))
 
@@ -227,12 +264,11 @@ censos_bolivia_tidy %>%
        subtitle = "Urban and rural population",
        y = "Population (millions)",
        x = "Year",
-       caption = "Sources: National Insitute of Statistics") +
+       caption = "Sources: INE") +
   # urban vs rural population comparison
   annotate("text",
           x = 1983.24,
           y = 3600000,
-          #hjust = 0,
           size = 3,
           label = "Urban population starts\nto grow faster than rural\nin 1983",
           color = "#778899") +
@@ -242,12 +278,16 @@ censos_bolivia_tidy %>%
            y = 5700000, 
            hjust = 0.2,
            size = 3,
-           label = "Total inhabitants\nis 4.6 M in 1976",
+           label = "Total population\nis 4.6 M in 1976",
            color = "#778899")
 ```
-- Year where population doubles since 1976. 
+
+### Doubling of population with respect to 1976
+
+Finding year where population doubles using total population in 1976 as reference. 
 
 ```{r}
+# Finding when population doubles
  4613419 * 2 # Hallar el valor de duplicacion 
 
 linetotal <- Line$new(A = c(1976, 4613419), B = c(2012, 10059856)) # Poblacion total
@@ -275,7 +315,7 @@ censos_bolivia_tidy %>%
        subtitle = "Urban and rural population",
        y = "Population (millions)",
        x = "Year",
-       caption = "Sources: National Insitute of Statistics") +
+       caption = "Sources: INE") +
   # urban vs rural population comparison
   annotate("text",
           x = 1983.24,
@@ -301,8 +341,8 @@ censos_bolivia_tidy %>%
            label = "Population doubles\nto 9.2 M in 2006.") 
 ```
 
-
-
+## Animations
+`gganimate()` A Grammar of Animated Graphics that helps create static visualizations compatible with ggplot, to specify transitions and animations. 
 
 ```{r}
 censos_bolivia_tidy_gif <- censos_bolivia_tidy %>% 
@@ -323,7 +363,7 @@ censos_bolivia_tidy_gif <- censos_bolivia_tidy %>%
        subtitle = "Urban and rural population",
        y = "Population (millions)",
        x = "Year",
-       caption = "Sources: National Insitute of Statistics") +
+       caption = "Sources: INE") +
   # urban vs rural population comparison
   annotate("text",
            x = 1983.24,
@@ -347,27 +387,7 @@ censos_bolivia_tidy_gif <- censos_bolivia_tidy %>%
            size = 3,
            color = "#778899",
            label = "Population doubles\nto 9.2 M in 2006.") +
-  transition_reveal(year) # <- Linea de codigo para crear animaciones
+  transition_reveal(year) # <- line of code to create animations
 
 censos_bolivia_tidy_gif
 ```
-
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
-```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
